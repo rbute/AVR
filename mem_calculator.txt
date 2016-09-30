@@ -1,0 +1,42 @@
+#!/bin/bash
+
+FIRMWARE=./build/disk/images/arm32/vexpress-a9/firmware.bin
+NOR_FLASH=./build/disk/images/arm32/vexpress-a9/nor_flash.list
+DTB=./build/disk/images/arm32/vexpress-a9x2.dtb
+CMDLIST=./build/disk/images/arm32/vexpress-a9/cmdlist
+KERNEL=./build/disk/images/arm32/vexpress-a9/Image
+INITRD=./build/disk/images/arm32/rootfs.img
+
+START_ADDR=0x40000000
+RELOC_ADDR=0x60000000
+output_advise=()
+function get_size(){
+    echo $(ls -l $1 | awk '{print $5}')
+}
+
+function block_adjust(){
+    if  [[ $[$1/$2] ]]; then
+        printf "0x%08x\n" $[$1+$2-$1%$2]
+    else
+        printf "0x%8x\n" $1
+    fi
+}
+
+function proposed_mem_map(){
+    start_addr=$1
+    offset=0
+    i=1;
+    for arg in $@ ; do
+        if [[ $i<=1 ]] ; then 
+            i=$[i+=1]
+        else
+            printf "copy\t0x%08x\t0x%08x\t0x%08x\t%s\t%s\n" $[$RELOC_ADDR+$offset] $[$START_ADDR+$offset] $(get_size $arg) ${arg#./build/disk} $arg
+            offset=$[ $offset + $(get_size $arg) ]
+            offset=$(block_adjust $offset 512)
+        fi
+    done
+}
+
+advise=$(proposed_mem_map $START_ADDR $FIRMWARE $CMDLIST $KERNEL $DTB $INITRD)
+
+printf "%s\n" "${advise[@]}"
