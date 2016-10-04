@@ -15,14 +15,15 @@ unsigned int waitFor(uint8_t HL);
 uint16_t receivedMessage();
 
 int main(void){
+    /////////////////THERE IS A HUGE BUG////////
 	uint16_t message;
-	DDRB=(1<<pin)|(1<<LED_PIN);	
+	DDRB=(1<<pin)|(1<<LED_PIN);
 	send('\n');
-	
-	
+
+
 	blink();
-	
-	
+
+
 	while(1){
 		//printInt(pulseWidth(0));
 		//blink();
